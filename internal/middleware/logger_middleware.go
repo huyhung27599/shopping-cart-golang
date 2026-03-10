@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
 )
 
@@ -24,16 +23,8 @@ func (w *CustomResponseWriter) Write(data []byte) (n int, err error) {
 	return w.ResponseWriter.Write(data)
 }
 
-func LoggerMiddleware() gin.HandlerFunc {
-	logPath := "../../internal/logs/http.log"
-
-	logger := zerolog.New(&lumberjack.Logger{
-		Filename:   logPath,
-		MaxSize:    1, // megabytes
-		MaxBackups: 5,
-		MaxAge:     5, //days
-		Compress:   true,
-	}).With().Timestamp().Logger()
+func LoggerMiddleware(logger zerolog.Logger) gin.HandlerFunc {
+	
 
 	return func(ctx *gin.Context) {
 		start := time.Now()
