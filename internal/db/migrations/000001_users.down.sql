@@ -1,1 +1,5 @@
-drop table if exists users;
+DROP TRIGGER IF EXISTS set_updated_at ON users;
+
+DROP FUNCTION IF EXISTS update_user_updated_at();
+
+DROP TABLE IF EXISTS users;

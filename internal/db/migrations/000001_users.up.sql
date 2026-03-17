@@ -25,3 +25,15 @@ COMMENT ON COLUMN users.user_level IS '1: Admin, 2: Moderator, 3: Member';
 
 CREATE INDEX IF NOT EXISTS idx_users_level ON users (user_level);
 CREATE INDEX IF NOT EXISTS idx_users_status ON users (user_status);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users (user_created_at);
+CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users (user_deleted_at);
+
+CREATE OR REPLACE FUNCTION update_user_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+	NEW.user_updated_at = NOW();
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_user_updated_at();
