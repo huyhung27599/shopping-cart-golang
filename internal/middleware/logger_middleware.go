@@ -23,7 +23,7 @@ func (w *CustomResponseWriter) Write(data []byte) (n int, err error) {
 	return w.ResponseWriter.Write(data)
 }
 
-func LoggerMiddleware(logger zerolog.Logger) gin.HandlerFunc {
+func LoggerMiddleware(logger *zerolog.Logger) gin.HandlerFunc {
 	
 
 	return func(ctx *gin.Context) {
