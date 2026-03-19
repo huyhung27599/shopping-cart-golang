@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -9,6 +10,12 @@ import (
 
 	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
+)
+
+type contextKey string
+
+const (
+	TraceIDContextKey contextKey = "trace_id"
 )
 
 type LoggerConfig struct {
@@ -62,4 +69,11 @@ func (w PrettyJSONWriter) Write(p []byte) (n int, err error) {
 		return w.Writer.Write(p)
 	}
 	return w.Writer.Write(prettyJSON.Bytes())
+}
+
+func GetTraceID(ctx context.Context) string {
+	if traceID, ok := ctx.Value(TraceIDContextKey).(string); ok {
+		return traceID
+	}
+	return ""
 }

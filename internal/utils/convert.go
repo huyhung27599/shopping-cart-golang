@@ -20,10 +20,17 @@ func NormalizeString(text string) string {
 	return strings.ToLower(strings.TrimSpace(text))
 }
 
-func ConvertToInt32Pointer(value int) *int32 {
+func ConvertToInt32Pointer(value int32) *int32 {
 	if value == 0 {
 		return nil
 	}
-	v := int32(value)
-	return &v
+
+	return &value
+}
+
+func CapitalizeFirstLetter(str string) string {
+	if len(str) == 0 {
+		return ""
+	}
+	return strings.ToUpper(str[:1]) + str[1:]
 }
