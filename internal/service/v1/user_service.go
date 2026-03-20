@@ -3,6 +3,7 @@ package v1service
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 	"user-management-api/internal/db/sqlc"
 	"user-management-api/internal/repository"
 	"user-management-api/internal/utils"
@@ -23,7 +24,41 @@ func NewUserService(repo repository.UserRepository) UserService {
 	}
 }
 
-func (us *userService) GetAllUsers(search string, page, limit int)  {
+func (us *userService) GetAllUsers(ctx *gin.Context, search string, orderBy string, sort string, page int32, limit int32) ([]sqlc.User, int64, error)  {
+	context := ctx.Request.Context()
+
+	if sort == "" {
+		sort = "desc"
+	}
+	if orderBy == "" {
+		orderBy = "user_created_at"
+	}
+	if page <= 0 {
+		page = 1
+	}
+
+	if limit <= 0 {
+		envLimit := utils.GetEnv("LIMIT_ITEMS_ON_PER_PAGE", "10")
+		limitInt, err := strconv.Atoi(envLimit)
+		if err != nil || limitInt <= 0 {
+			limitInt=10
+		}
+		limit = int32(limitInt)
+	}
+
+	offset := (page - 1) * limit
+
+	users, err := us.repo.GetAll(context, search, orderBy, sort, limit, offset)
+	if err != nil {
+		return []sqlc.User{}, 0, utils.WrapError(err, "Failed to get users", utils.ErrCodeInternal)
+	}
+
+	total, err := us.repo.CountUsers(context, search)
+	if err != nil {
+		return []sqlc.User{}, 0, utils.WrapError(err, "Failed to count users", utils.ErrCodeInternal)
+	}
+	return users, total, nil
+	
 	
 }
 

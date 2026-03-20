@@ -14,3 +14,51 @@ UPDATE users SET user_deleted_at = NULL WHERE user_uuid = sqlc.arg(user_uuid) ::
 
 -- name: TrashUser :one
 DELETE FROM users WHERE user_uuid = sqlc.arg(user_uuid) ::uuid AND user_deleted_at IS NULL RETURNING *;
+
+-- name: ListUsersUserIdAsc :many
+SELECT * FROM users WHERE user_deleted_at IS NULL AND (
+    sqlc.narg(search)::text IS NULL OR
+    sqlc.narg(search)::text = '' OR
+    user_email ILIKE '%' || sqlc.arg(search) || '%' OR
+    user_fullname ILIKE '%' || sqlc.arg(search) || '%'
+)
+ORDER BY user_id ASC
+LIMIT $1 OFFSET $2;
+
+-- name: ListUsersUserIdDesc :many
+SELECT * FROM users WHERE user_deleted_at IS NULL AND (
+    sqlc.narg(search)::text IS NULL OR
+    sqlc.narg(search)::text = '' OR
+    user_email ILIKE '%' || sqlc.arg(search) || '%' OR
+    user_fullname ILIKE '%' || sqlc.arg(search) || '%'
+)
+ORDER BY user_id DESC
+LIMIT $1 OFFSET $2;
+
+-- name: ListUsersCreatedAtAsc :many
+SELECT * FROM users WHERE user_deleted_at IS NULL AND (
+    sqlc.narg(search)::text IS NULL OR
+    sqlc.narg(search)::text = '' OR
+    user_email ILIKE '%' || sqlc.arg(search) || '%' OR
+    user_fullname ILIKE '%' || sqlc.arg(search) || '%'
+)
+ORDER BY user_created_at ASC
+LIMIT $1 OFFSET $2;
+
+-- name: ListUsersCreatedAtDesc :many
+SELECT * FROM users WHERE user_deleted_at IS NULL AND (
+    sqlc.narg(search)::text IS NULL OR
+    sqlc.narg(search)::text = '' OR
+    user_email ILIKE '%' || sqlc.arg(search) || '%' OR
+    user_fullname ILIKE '%' || sqlc.arg(search) || '%'
+)
+ORDER BY user_created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: CountUsers :one
+SELECT COUNT(*) FROM users WHERE user_deleted_at IS NULL AND (
+    sqlc.narg(search)::text IS NULL OR
+    sqlc.narg(search)::text = '' OR
+    user_email ILIKE '%' || sqlc.arg(search) || '%' OR
+    user_fullname ILIKE '%' || sqlc.arg(search) || '%'
+);

@@ -11,7 +11,12 @@ import (
 )
 
 type Querier interface {
+	CountUsers(ctx context.Context, search string) (int64, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	ListUsersCreatedAtAsc(ctx context.Context, arg ListUsersCreatedAtAscParams) ([]User, error)
+	ListUsersCreatedAtDesc(ctx context.Context, arg ListUsersCreatedAtDescParams) ([]User, error)
+	ListUsersUserIdAsc(ctx context.Context, arg ListUsersUserIdAscParams) ([]User, error)
+	ListUsersUserIdDesc(ctx context.Context, arg ListUsersUserIdDescParams) ([]User, error)
 	RestoreUser(ctx context.Context, userUuid uuid.UUID) (User, error)
 	SoftDeleteUser(ctx context.Context, userUuid uuid.UUID) (User, error)
 	TrashUser(ctx context.Context, userUuid uuid.UUID) (User, error)
