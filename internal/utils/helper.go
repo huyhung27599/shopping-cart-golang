@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"strconv"
 	"user-management-api/pkg/logger"
 
 	"github.com/rs/zerolog"
@@ -15,6 +16,21 @@ func GetEnv(key, defaultValue string) string {
 
 	return defaultValue
 }
+
+func GetIntEnv(key string, defaultValue int) int {
+value := os.Getenv(key)
+if value == "" {
+	return defaultValue
+}
+intValue, err := strconv.Atoi(value)
+if err != nil {
+	return defaultValue
+}
+return intValue
+
+	
+}
+
 
 
 func NewLoggerWithPath(path string, level string) *zerolog.Logger {

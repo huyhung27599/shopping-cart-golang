@@ -56,9 +56,12 @@ ORDER BY user_created_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: CountUsers :one
-SELECT COUNT(*) FROM users WHERE user_deleted_at IS NULL AND (
+SELECT COUNT(*) FROM users WHERE (sqlc.narg(deleted)::boolean IS NULL OR sqlc.narg(deleted)::boolean = false) AND (user_deleted_at IS NULL) AND (
     sqlc.narg(search)::text IS NULL OR
     sqlc.narg(search)::text = '' OR
     user_email ILIKE '%' || sqlc.arg(search) || '%' OR
     user_fullname ILIKE '%' || sqlc.arg(search) || '%'
 );
+
+-- name: GetUser :one
+SELECT * FROM users WHERE user_uuid = $1 AND user_deleted_at IS NULL;

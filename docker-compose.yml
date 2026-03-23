@@ -4,12 +4,35 @@ services:
     container_name: postgres-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: shopping-cart
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: hung
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+  redis:
+    image: redis:8.0.0-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    environment:
+      REDIS_DB: ${REDIS_DB}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_USER: ${REDIS_USER}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+      - ./system/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    networks:
+      - app-network
 volumes:
   pgdata:
+  redisdata:
+
+networks:
+  app-network:
+    driver: bridge

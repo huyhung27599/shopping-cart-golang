@@ -30,7 +30,7 @@ func (uh *UserHandler) GetAllUsers(ctx *gin.Context) {
 		return
 	}
 
-	users, total, err := uh.service.GetAllUsers(ctx, params.Search, params.Order, params.Sort, params.Page, params.Limit)
+	users, total, err := uh.service.GetAllUsers(ctx, params.Search, params.Order, params.Sort, params.Page, params.Limit, false)
 	if err != nil {
 		utils.ResponseError(ctx, err)
 		return
@@ -72,13 +72,43 @@ func (uh *UserHandler) GetUserByUUID(ctx *gin.Context) {
 		return
 	}
 
+	userUuid, err := uuid.Parse(params.Uuid)
+	if err != nil {
+		utils.ResponseError(ctx, err)
+		return
+	}
+
+	user, err := uh.service.GetUserByUUID(ctx, userUuid)
+	if err != nil {
+		utils.ResponseError(ctx, err)
+		return
+	}
+
+	userDTO := v1dto.MapUserToDTO(user)
 
 
-
-
-	utils.ResponseSuccess(ctx, http.StatusOK, "")
+	utils.ResponseSuccess(ctx, http.StatusOK, "User fetched successfully", userDTO)
 }
 
+
+func (uh *UserHandler) GetUserSoftDeleted(ctx *gin.Context) {
+	var params v1dto.GetUsersParams
+	if err := ctx.ShouldBindQuery(&params); err != nil {
+		utils.ResponseValidator(ctx, validation.HandleValidationErrors(err))
+		return
+	}
+
+	users, total, err := uh.service.GetAllUsers(ctx, params.Search, params.Order, params.Sort, params.Page, params.Limit, true)
+	if err != nil {
+		utils.ResponseError(ctx, err)
+		return
+	}
+
+	usersDTO := v1dto.MapUsersToDTO(users)
+	paginationResponse := utils.NewPaginationResponse(usersDTO, params.Page, params.Limit, total)
+
+	utils.ResponseSuccess(ctx, http.StatusOK, "Users fetched successfully", paginationResponse)
+}
 func (uh *UserHandler) UpdateUser(ctx *gin.Context) {
 	var params v1dto.GetUserByUuidParam
 	if err := ctx.ShouldBindUri(&params); err != nil {
