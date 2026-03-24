@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"net/http"
 	"user-management-api/internal/middleware"
 	"user-management-api/internal/utils"
 
@@ -22,6 +23,7 @@ func RegisterRoutes(r *gin.Engine, routes ...Route) {
 
 	r.Use(
 		middleware.RateLimiterMiddleware(rateLimiterLogger),
+		middleware.CorsMiddleware(),
 		middleware.TraceMiddleware(),
 		middleware.LoggerMiddleware(httpLogger),
 		middleware.RecoveryMiddleware(recoveryLogger),
@@ -37,6 +39,10 @@ func RegisterRoutes(r *gin.Engine, routes ...Route) {
 	for _, route := range routes {
 		route.Register(v1api)
 	}
+
+	r.NoRoute(func(ctx *gin.Context) {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+	})
 }
 
 

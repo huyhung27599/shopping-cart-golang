@@ -65,3 +65,6 @@ SELECT COUNT(*) FROM users WHERE (sqlc.narg(deleted)::boolean IS NULL OR sqlc.na
 
 -- name: GetUser :one
 SELECT * FROM users WHERE user_uuid = $1 AND user_deleted_at IS NULL;
+
+-- name: GetUserByEmail :one
+SELECT * FROM users WHERE user_email = $1 AND user_deleted_at IS NULL;
