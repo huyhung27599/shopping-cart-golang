@@ -3,7 +3,10 @@ package routes
 import (
 	"net/http"
 	"user-management-api/internal/middleware"
+	v1routes "user-management-api/internal/routes/v1"
 	"user-management-api/internal/utils"
+	"user-management-api/pkg/auth"
+	"user-management-api/pkg/cache"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -13,7 +16,7 @@ type Route interface {
 	Register(r *gin.RouterGroup)
 }
 
-func RegisterRoutes(r *gin.Engine, routes ...Route) {
+func RegisterRoutes(r *gin.Engine, authService auth.TokenService, cacheService cache.RedisCacheService, routes ...Route) {
 	
 	httpLogger := utils.NewLoggerWithPath("../../internal/logs/http.log", "info")
 
@@ -28,7 +31,7 @@ func RegisterRoutes(r *gin.Engine, routes ...Route) {
 		middleware.LoggerMiddleware(httpLogger),
 		middleware.RecoveryMiddleware(recoveryLogger),
 		middleware.ApiKeyMiddleware(),
-		middleware.AuthMiddleware(),
+		
 		
 	)
 
@@ -36,8 +39,18 @@ func RegisterRoutes(r *gin.Engine, routes ...Route) {
 
 	v1api := r.Group("/api/v1")
 
+	middleware.InitAuthMiddleware(authService, cacheService)
+
+	protected := v1api.Group("")
+	protected.Use(middleware.AuthMiddleware())
+
 	for _, route := range routes {
-		route.Register(v1api)
+		switch route.(type) {
+		case *v1routes.AuthRoutes:
+			route.Register(v1api)
+		default:
+			route.Register(protected)
+		}
 	}
 
 	r.NoRoute(func(ctx *gin.Context) {

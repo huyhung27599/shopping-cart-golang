@@ -8,4 +8,9 @@ type LoginInput struct {
 type LoginResponse struct {
 	AccessToken string `json:"access_token"`
 	Expiration int `json:"expiration"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+type RefreshTokenInput struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
 }

@@ -8,17 +8,17 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RedisCacheService struct{
+type redisCacheService struct{
 	ctx context.Context
 	rdb *redis.Client
 }
 
-func NewRedisCacheService(rdb *redis.Client) *RedisCacheService {
-	return &RedisCacheService{ctx: context.Background(), rdb: rdb}
+func NewRedisCacheService(rdb *redis.Client) RedisCacheService {
+	return &redisCacheService{ctx: context.Background(), rdb: rdb}
 
 }
 
-func (r *RedisCacheService) Get(key string, dest any)  error {
+func (r *redisCacheService) Get(key string, dest any)  error {
 	data, err := r.rdb.Get(r.ctx, key).Result()
 	if err == redis.Nil {
 		return err
@@ -30,7 +30,7 @@ func (r *RedisCacheService) Get(key string, dest any)  error {
 	return json.Unmarshal([]byte(data), dest)
 }
 
-func (r *RedisCacheService) Set(key string, value interface{}, ttl time.Duration) error {
+func (r *redisCacheService) Set(key string, value interface{}, ttl time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func (r *RedisCacheService) Set(key string, value interface{}, ttl time.Duration
 	
 }
 
-func (r *RedisCacheService) Clear(pattern string) error {
+func (r *redisCacheService) Clear(pattern string) error {
  cursor := uint64(0)
  for {
 	keys, nextCursor, err := r.rdb.Scan(r.ctx, cursor, pattern, 100).Result()
@@ -57,4 +57,12 @@ func (r *RedisCacheService) Clear(pattern string) error {
 	}
  }
  return nil
+}
+
+func (r *redisCacheService) Exists(key string) (bool, error) {
+	 exists, err := r.rdb.Exists(r.ctx, key).Result()
+	 if err != nil {
+		return false, err
+	 }
+	 return exists > 0, nil
 }
