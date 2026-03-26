@@ -14,6 +14,7 @@ const (
 	ErrCodeConflict   ErrorCode = "CONFLICT"
 	ErrCodeInternal   ErrorCode = "INTERNAL_SERVER_ERROR"
 	ErrCodeUnauthorized ErrorCode = "UNAUTHORIZED"
+	ErrCodeTooManyRequests ErrorCode = "TOO_MANY_REQUESTS"
 )
 
 type AppError struct {
@@ -116,6 +117,8 @@ func httpStatusFromCode(code ErrorCode) int {
 		return http.StatusConflict
 	case ErrCodeUnauthorized:
 		return http.StatusUnauthorized
+	case ErrCodeTooManyRequests:
+		return http.StatusTooManyRequests
 	default:
 		return http.StatusInternalServerError
 	}

@@ -18,6 +18,8 @@ const (
 	TraceIDContextKey contextKey = "trace_id"
 )
 
+var Log *zerolog.Logger
+
 type LoggerConfig struct {
 	Level      string
 	Filename   string
@@ -26,6 +28,10 @@ type LoggerConfig struct {
 	MaxAge     int
 	Compress   bool
 	IsDev string
+}
+
+func InitLogger(config LoggerConfig) {
+	Log = NewLogger(config)
 }
 
 func NewLogger(config LoggerConfig) *zerolog.Logger {

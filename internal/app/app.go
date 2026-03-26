@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,9 +14,9 @@ import (
 	"user-management-api/internal/validation"
 	"user-management-api/pkg/auth"
 	"user-management-api/pkg/cache"
+	"user-management-api/pkg/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -38,15 +37,15 @@ type ModuleContext struct {
 
 func NewApplication(cfg *config.Config) *Application {
 	if err := validation.InitValidator(); err != nil {
-		log.Fatalf("Validator init failed %v", err)
+		logger.Log.Error().Msgf("Validator init failed %v", err)
 	}
 
-	loadEnv()
+	
 	
 	r := gin.Default()
 
 	if err := db.InitDB(); err != nil {
-		log.Fatalf("DB init failed %v", err)
+		logger.Log.Error().Msgf("DB init failed %v", err)
 	}
 
 	redisClient := config.NewRedisClient()
@@ -83,24 +82,24 @@ func (a *Application) Run() error {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM,syscall.SIGHUP)
 
 	go func() {
-		log.Println("Starting server on", a.config.ServerAddress)
+		logger.Log.Info().Msgf("Starting server on %s", a.config.ServerAddress)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+			logger.Log.Error().Msgf("Failed to start server: %v", err)
 		}
 	
 	}()
 
 	<- quit
-	log.Println("Shutting down server...")
+	logger.Log.Info().Msgf("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Failed to shutdown server: %v", err)
+		logger.Log.Error().Msgf("Failed to shutdown server: %v", err)
 	}
 
-	log.Println("Server stopped")
+	logger.Log.Info().Msgf("Server stopped")
 
 	return nil
 }
@@ -114,9 +113,3 @@ func getModulRoutes(modules []Module) []routes.Route {
 	return routeList
 }
 
-func loadEnv() {
-	err := godotenv.Load("../../.env")
-	if err != nil {
-		log.Println("No .env file found")
-	}
-}

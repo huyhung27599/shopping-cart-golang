@@ -18,11 +18,11 @@ type Route interface {
 
 func RegisterRoutes(r *gin.Engine, authService auth.TokenService, cacheService cache.RedisCacheService, routes ...Route) {
 	
-	httpLogger := utils.NewLoggerWithPath("../../internal/logs/http.log", "info")
+	httpLogger := utils.NewLoggerWithPath("http.log", "info")
 
-	recoveryLogger := utils.NewLoggerWithPath("../../internal/logs/recovery.log", "error")
+	recoveryLogger := utils.NewLoggerWithPath("recovery.log", "error")
 
-	rateLimiterLogger := utils.NewLoggerWithPath("../../internal/logs/rate_limiter.log", "info")
+	rateLimiterLogger := utils.NewLoggerWithPath("rate_limiter.log", "info")
 
 	r.Use(
 		middleware.RateLimiterMiddleware(rateLimiterLogger),

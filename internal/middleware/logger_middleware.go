@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/url"
 	"strings"
 	"time"
+	loggerpkg "user-management-api/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -123,7 +125,7 @@ func LoggerMiddleware(logger *zerolog.Logger) gin.HandlerFunc {
 		}
 
 		logEvent.
-			Str("trace_id", logger.GetTraceID(ctx.Request.Context())).
+			Str("trace_id", loggerpkg.GetTraceID(ctx.Request.Context())).
 			Str("method", ctx.Request.Method).
 			Str("path", ctx.Request.URL.Path).
 			Str("query", ctx.Request.URL.RawQuery).
@@ -145,12 +147,13 @@ func LoggerMiddleware(logger *zerolog.Logger) gin.HandlerFunc {
 }
 
 func formatFileSize(size int64) string {
+	log.Println("size", size)
 	switch {
 	case size >= 1<<20:
 		return fmt.Sprintf("%.2f MB", float64(size)/(1<<20))
 	case size >= 1<<10:
 		return fmt.Sprintf("%.2f KB", float64(size)/(1<<10))
 	default:
-		return fmt.Sprintf("%d B", size)
+		return fmt.Sprintf("%d B", size )
 	}
 }

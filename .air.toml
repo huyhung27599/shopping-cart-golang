@@ -1,0 +1,20 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o main ./cmd/api"
+bin = "main"
+include_ext = ["go", "yml", "env"]
+exclude_dir = ["assets", "tmp", "vendor", "frontend/node_modules"]
+delay = 1000
+send_interrupt = true
+log = "build.log"
+
+[log]
+time=true
+
+[color]
+main = "magenta"
+watcher = "cyan"
+build = "yellow"
+runner = "green"
