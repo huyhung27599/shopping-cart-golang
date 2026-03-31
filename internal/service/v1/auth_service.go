@@ -1,6 +1,7 @@
 package v1service
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -8,9 +9,11 @@ import (
 	"user-management-api/internal/utils"
 	"user-management-api/pkg/auth"
 	"user-management-api/pkg/cache"
+	"user-management-api/pkg/mail"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/time/rate"
 )
@@ -19,6 +22,7 @@ type authService struct {
 	userRepository repository.UserRepository
 	tokenService auth.TokenService
 	cache cache.RedisCacheService
+	mailService mail.EmailProviderService
 }
 
 type LoginAttempt struct {
@@ -33,11 +37,12 @@ var (
 	MaxLoginAttempt = 5
 )
 
-func NewAuthService(userRepository repository.UserRepository, tokenService auth.TokenService, cache cache.RedisCacheService) *authService {
+func NewAuthService(userRepository repository.UserRepository, tokenService auth.TokenService, cache cache.RedisCacheService, mailService mail.EmailProviderService) *authService {
 	return &authService{
 		userRepository: userRepository,
 		tokenService: tokenService,
 		cache: cache,
+		mailService: mailService,
 	}
 }
 
@@ -196,4 +201,68 @@ func (as *authService) RefreshToken(ctx *gin.Context, refreshToken string) (stri
  }
 
  return accessToken, newRefreshToken.Token, int(auth.AccessTokenExpiration.Seconds()), nil
+}
+
+
+func (as *authService) RequestForgotPassword(ctx *gin.Context, email string) error {
+	context := ctx.Request.Context()
+
+	rateLimitKey := fmt.Sprintf("rate_limit:forgot_password:%s", email)
+	if exists, err := as.cache.Exists(rateLimitKey); err == nil && exists {
+		return utils.NewError("Too many requests", utils.ErrCodeTooManyRequests)
+	}
+	
+	user, err := as.userRepository.FindByEmail(context, email)
+	if err != nil {
+		return utils.WrapError(err, "Failed to find user", utils.ErrCodeInternal)
+	}
+
+	token, err := utils.GenerateRandomString(32)
+	if err != nil {
+		return utils.WrapError(err, "Failed to generate token", utils.ErrCodeInternal)
+	}
+	err = as.cache.Set("reset"+ token, user.UserUuid.String(), 60*time.Minute)
+	if err != nil {
+		return utils.WrapError(err, "Failed to set reset token", utils.ErrCodeInternal)
+	}
+
+	 if err := as.cache.Set(rateLimitKey, "1", 10*time.Minute); err != nil {
+		return utils.WrapError(err, "Failed to set rate limit", utils.ErrCodeInternal)
+	 }
+
+	resetLink := fmt.Sprintf("%s/reset-password?token=%s", utils.GetEnv("FRONTEND_URL", "http://localhost:3000"), token)
+
+
+
+	return nil
+}
+
+func (as *authService) ResetPassword(ctx *gin.Context, token, newPassword string) error {
+	context := ctx.Request.Context()
+	var userUUIDStr string
+	err := as.cache.Get("reset"+ token, &userUUIDStr)
+	if err == redis.Nil  || userUUIDStr == "" {
+		return utils.NewError("Invalid or expired token", utils.ErrCodeUnauthorized)
+	}
+	if err != nil {
+		return utils.WrapError(err, "Failed to get reset token", utils.ErrCodeInternal)
+	}
+	userUUID, err := uuid.Parse(userUUIDStr)
+	if err != nil {
+		return utils.WrapError(err, "Failed to parse user UUID", utils.ErrCodeInternal)
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return utils.WrapError(err, "Failed to hash password", utils.ErrCodeInternal)
+	}
+	hashedPasswordStr := string(hashedPassword)
+	_, err = as.userRepository.UpdatePassword(context, userUUID, hashedPasswordStr)
+	if err != nil {
+		return utils.WrapError(err, "Failed to update password", utils.ErrCodeInternal)
+	}
+
+	if err := as.cache.Clear("reset" + token); err != nil {
+		return utils.WrapError(err, "Failed to clear reset token", utils.ErrCodeInternal)
+	}
+	return nil
 }
