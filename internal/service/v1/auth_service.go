@@ -232,6 +232,16 @@ func (as *authService) RequestForgotPassword(ctx *gin.Context, email string) err
 
 	resetLink := fmt.Sprintf("%s/reset-password?token=%s", utils.GetEnv("FRONTEND_URL", "http://localhost:3000"), token)
 
+	mailContent := &mail.Email{
+		To: []mail.Adderss{{Email: user.UserEmail, Name: user.UserFullname}},
+		Subject: "Reset Password",
+		Text: fmt.Sprintf("Click the link to reset your password: %s", resetLink),
+	}
+
+	if err := as.mailService.SendMail(context, mailContent); err != nil {
+		return utils.WrapError(err, "Failed to send reset password email", utils.ErrCodeInternal)
+	}
+
 
 
 	return nil

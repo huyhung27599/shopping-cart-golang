@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 	loggerpkg "user-management-api/pkg/logger"
@@ -33,6 +34,9 @@ func LoggerMiddleware(logger *zerolog.Logger) gin.HandlerFunc {
 		contentType := ctx.GetHeader("Content-Type")
 		requestBody := make(map[string]any)
 		var formFiles []map[string]any
+		var sensitiveFields = []string{
+			"password","pass","new_password",
+		}
 
 		// multipart/form-data
 		if strings.HasPrefix(contentType, "multipart/form-data") {
@@ -138,7 +142,7 @@ func LoggerMiddleware(logger *zerolog.Logger) gin.HandlerFunc {
 			Str("request_uri", ctx.Request.RequestURI).
 			Int64("content_length", ctx.Request.ContentLength).
 			Interface("headers", ctx.Request.Header).
-			Interface("request_body", requestBody).
+			Interface("request_body", sanitizeRequestBody(requestBody, sensitiveFields)).
 			Int("status_code", statusCode).
 			Interface("response_body", responseBodyParsed).
 			Int64("duration_ms", duration.Milliseconds()).
@@ -156,4 +160,17 @@ func formatFileSize(size int64) string {
 	default:
 		return fmt.Sprintf("%d B", size )
 	}
+}
+
+func sanitizeRequestBody(requestBody map[string]any, sensitiveFields []string) map[string]any {
+	sanitizedBody := make(map[string]any)
+
+	for key, value := range requestBody {
+		if slices.Contains(sensitiveFields, key) {
+			sanitizedBody[key] = "********"
+		} else {
+			sanitizedBody[key] = value
+		}
+	}
+	return sanitizedBody
 }
