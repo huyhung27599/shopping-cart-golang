@@ -64,3 +64,11 @@ func GenerateRandomString(length int) (string, error) {
 	}
 return base64.StdEncoding.EncodeToString(bytes), nil
 }
+
+func MustGetWorkkingDir() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get working directory: %v", err)
+	}
+	return wd
+}

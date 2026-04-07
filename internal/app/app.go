@@ -37,9 +37,10 @@ type ModuleContext struct {
 	Redis *redis.Client
 }
 
-func NewApplication(cfg *config.Config) *Application {
+func NewApplication(cfg *config.Config) (*Application ,error) {
 	if err := validation.InitValidator(); err != nil {
 		logger.Log.Error().Msgf("Validator init failed %v", err)
+		return nil, err
 	}
 
 	
@@ -48,6 +49,7 @@ func NewApplication(cfg *config.Config) *Application {
 
 	if err := db.InitDB(); err != nil {
 		logger.Log.Error().Msgf("DB init failed %v", err)
+		return nil, err
 	}
 
 	redisClient := config.NewRedisClient()
@@ -57,10 +59,12 @@ func NewApplication(cfg *config.Config) *Application {
 	factory, err := mail.NewProviderFactory(mail.ProviderMailtrap)
 	if err != nil {
 		mailLogger.Error().Err(err).Msg("Failed to create mail provider factory")
+		return nil, err
 	}
 	mailService, err := mail.NewMailService(cfg, mailLogger, factory)
 	if err != nil {
 		mailLogger.Error().Err(err).Msg("Failed to create mail service")
+		return nil, err
 	}
 
 	ctx := &ModuleContext{
@@ -79,7 +83,7 @@ func NewApplication(cfg *config.Config) *Application {
 		config: cfg,
 		router: r,
 		modules: modules,
-	}
+	}, nil
 }
 
 func (a *Application) Run() error {
