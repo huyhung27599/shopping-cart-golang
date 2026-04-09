@@ -52,6 +52,7 @@ func NewMailtrapProvider(config *MailConfig) (EmailProviderService, error) {
 func (m *MailtrapProvider) SendMail(ctx context.Context, email *Email) error {
 	traceID := logger.GetTraceID(ctx)
 	start := time.Now()
+	time.Sleep(5 * time.Second)
 	email.From = Adderss{
 		Email: m.config.MailSender,
 		Name: m.config.NameSender,

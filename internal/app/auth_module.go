@@ -9,15 +9,16 @@ import (
 	"user-management-api/pkg/auth"
 	"user-management-api/pkg/cache"
 	"user-management-api/pkg/mail"
+	"user-management-api/pkg/rabbitmq"
 )
 
 type AuthModule struct {
 	routes routes.Route
 }
 
-func NewAuthModule(ctx *ModuleContext, tokenService auth.TokenService, cache cache.RedisCacheService, mailService mail.EmailProviderService) *AuthModule {
+func NewAuthModule(ctx *ModuleContext, tokenService auth.TokenService, cache cache.RedisCacheService, mailService mail.EmailProviderService, rabbitMQService rabbitmq.RabbitMQService) *AuthModule {
 	userRepo := repository.NewSqlUserRepository(ctx.DB)
-	authService := v1service.NewAuthService(userRepo, tokenService, cache, mailService)
+	authService := v1service.NewAuthService(userRepo, tokenService, cache, mailService, rabbitMQService)
 	authHandler := v1handler.NewAuthHandler(authService)
 	authRoutes := v1routes.NewAuthRoutes(authHandler)
 
